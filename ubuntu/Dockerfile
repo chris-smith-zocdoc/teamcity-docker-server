@@ -10,12 +10,10 @@ RUN apt-get update \
 
 # JDK preparation start
 
-ARG MD5SUM='3511152bd52c867f8b550d7c8d7764aa'
-ARG JDK_URL='https://d3pxv6yz143wms.cloudfront.net/8.232.09.1/amazon-corretto-8.232.09.1-linux-x64.tar.gz'
+ARG JDK_URL='https://corretto.aws/downloads/resources/8.242.07.1/amazon-corretto-8.242.07.1-linux-x64.tar.gz'
 
 RUN set -eux; \
     curl -LfsSo /tmp/openjdk.tar.gz ${JDK_URL}; \
-    echo "${MD5SUM} */tmp/openjdk.tar.gz" | md5sum -c -; \
     mkdir -p /opt/java/openjdk; \
     cd /opt/java/openjdk; \
     tar -xf /tmp/openjdk.tar.gz --strip-components=1; \
@@ -45,7 +43,7 @@ LABEL dockerImage.teamcity.version="latest" \
       dockerImage.teamcity.buildNumber="latest"
 
 RUN apt-get update && \
-    apt-get install -y git mercurial ca-certificates && \
+    apt-get install -y git mercurial ca-certificates wget && \
     apt-get clean all
 
 COPY welcome.sh /welcome.sh
@@ -57,10 +55,10 @@ RUN chmod +x /welcome.sh /run-server.sh /run-services.sh && sync && \
     useradd -r -u 1000 -g tcuser tcuser && \
     echo '[ ! -z "$TERM" -a -x /welcome.sh -a -x /welcome.sh ] && /welcome.sh' >> /etc/bash.bashrc
 
-COPY --chown=tcuser:tcuser dist/teamcity $TEAMCITY_DIST
+
+RUN wget -q https://download.jetbrains.com/teamcity/TeamCity-2019.2.1.tar.gz
+RUN tar -xf TeamCity-2019.2.1.tar.gz -C /opt/
+RUN mv /opt/TeamCity $TEAMCITY_DIST
 
 
-VOLUME $TEAMCITY_DATA_PATH \
-       $TEAMCITY_LOGS
-
-CMD ["/run-services.sh"]
+CMD ["/bin/bash"]
